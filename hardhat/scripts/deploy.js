@@ -1,32 +1,57 @@
-// We require the Hardhat Runtime Environment explicitly here. This is optional
-// but useful for running the script in a standalone fashion through `node <script>`.
-//
-// You can also run a script with `npx hardhat run <script>`. If you do that, Hardhat
-// will compile your contracts, add the Hardhat Runtime Environment's members to the
-// global scope, and execute the script.
-const hre = require("hardhat");
+const { ethers } = require("hardhat")
+
+require("dotenv").config({ path: ".env" })
+
+const {
+  LINK_TOKEN,
+  VRF_COORDINATOR,
+  KEY_HASH,
+  FEE,
+} = require("../constants/index")
 
 async function main() {
-  const currentTimestampInSeconds = Math.round(Date.now() / 1000);
-  const unlockTime = currentTimestampInSeconds + 60;
+  /* 
+    Contract Factory in ethers.js is an abstraction to deploy new smart contracts.
 
-  const lockedAmount = hre.ethers.utils.parseEther("0.001");
+    here randomWinner is a factory for instance of our RandomWinnerGame contract 
+  */
 
-  const Lock = await hre.ethers.getContractFactory("Lock");
-  const lock = await Lock.deploy(unlockTime, { value: lockedAmount });
+  const randomWinnerGame = await ethers.getContractFactory("Lottery")
+  // Deploying the contract
 
-  await lock.deployed();
+  const deployedRandomWinnerGameContract = await randomWinnerGame.deploy(
+    VRF_COORDINATOR,
+    LINK_TOKEN,
+    KEY_HASH,
+    FEE
+  )
 
+  await deployedRandomWinnerGameContract.deployed()
+
+  // Lets print the address of the deployed contract
   console.log(
-    `Lock with ${ethers.utils.formatEther(
-      lockedAmount
-    )}ETH and unlock timestamp ${unlockTime} deployed to ${lock.address}`
-  );
+    "Contract address to verify :",
+    deployedRandomWinnerGameContract.address
+  )
+
+  function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+  console.log("Sleeping....")
+  //Waiting for etherscan to notice that the contract has been deployed.
+  await sleep(30000)
+
+  // Verify the contract after deploying
+  await hre.run("verify:verify", {
+    address: deployedRandomWinnerGameContract.address,
+    constructorArguments: [VRF_COORDINATOR, LINK_TOKEN, KEY_HASH, FEE],
+  })
+
 }
 
-// We recommend this pattern to be able to use async/await everywhere
-// and properly handle errors.
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+main()
+  .then(() => process.exit(0))
+  .catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });

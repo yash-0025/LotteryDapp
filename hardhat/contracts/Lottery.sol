@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.18;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@chainlink/contracts/src/v0.8/VRFConsumerBase.sol";
@@ -38,7 +38,7 @@ contract Lottery is VRFConsumerBase, Ownable {
 
     // Creating Events
     // Event to call while starting game 
-    event GameStarting(uint256 gameId, uint8 maxPlayers, uint256 entryFee)
+    event GameStarting(uint256 gameId, uint8 maxPlayers, uint256 entryFee);
     // Event to call when someone join the game
     event PlayerJoined(uint256 gameId, address player);
     // Event to call when game ends
@@ -53,7 +53,7 @@ contract Lottery is VRFConsumerBase, Ownable {
     // vrfKeyHash => It is an id of public key against which randomness is generated
 
     constructor(address vrfCoordinator, address linkToken, bytes32 vrfkeyHash, uint256 vrfFee) VRFConsumerBase(vrfCoordinator, linkToken) {
-        keyHash = vrfKeyHash;
+        keyHash = vrfkeyHash;
         fee = vrfFee;
         gameStarted = false;
     }
@@ -120,7 +120,7 @@ function getRandomWinner() private returns (bytes32 requestId) {
     //  Make a request to VRFcoordinator
     // Request randomness is a function within the VRF consumer base
     // It starts with the process of randomness generation
-    return requestRandomness(keyHashm, fee);
+    return requestRandomness(keyHash, fee);
 }
 
     // Function to receive ether, msg.data must be empty
